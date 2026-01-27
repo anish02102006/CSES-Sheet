@@ -2310,3 +2310,367 @@ If you want, I can also show how to generate the *same move sequence* **iterativ
 [1]: https://cses.fi/problemset/task/2165?utm_source=chatgpt.com "Tower of Hanoi"
 [2]: https://www.hackerearth.com/blog/tower-hanoi-recursion-game-algorithm-explained?utm_source=chatgpt.com "Tower of Hanoi recursion game algorithm explained"
 
+
+https://cses.fi/problemset/task/1623/
+
+
+Here’s a **complete explanation** of the CSES problem you linked — **Apple Division** (task 1623) — with **brute force, better concepts, and optimized approaches**, plus clear C++ code for each.([cses.fi][1])
+
+---
+
+## 📌 Problem Summary
+
+> You are given **n apples** with known weights. Divide them into two groups so that the **difference between the total weights of the groups is as small as possible**.
+> Print the minimal possible difference.([cses.fi][1])
+
+**Constraints:**
+
+* (1 \le n \le 20)
+* (1 \le p_i \le 10^9)
+
+The constraint (n \le 20) is key: it suggests that exponential approaches are acceptable if done carefully.([cses.fi][2])
+
+---
+
+## 🧠 Approach 1: Brute Force (Try All Subsets)
+
+### 🧩 Idea
+
+Every apple can go into either **group A** or **group B**. For **n apples**, that gives **2ⁿ possible divisions**.
+
+For each subset:
+
+* Let subset sum = sum of apples in group A.
+* Then group B sum = (total sum − subset sum).
+* Compute difference = |(total − subset) − subset|.
+* Track the minimum difference.
+
+This is a classical brute-force approach using bitmasks.
+
+### ⏱️ Time & Space
+
+* Time: (O(2^n \cdot n)) — each subset, sum is computed in (O(n))
+* Space: (O(1)) auxiliary
+
+With (n \le 20), (2^{20} ≈ 1{,}048{,}576), which runs within time limits.([GeeksforGeeks][3])
+
+### 💻 C++ Code — Brute Force (Bitmask)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    cin >> n;
+    vector<long long> w(n);
+    long long total = 0;
+    for (int i = 0; i < n; i++) {
+        cin >> w[i];
+        total += w[i];
+    }
+
+    long long best = LLONG_MAX;
+
+    // Loop over every subset
+    for (int mask = 0; mask < (1 << n); mask++) {
+        long long sumA = 0;
+        for (int j = 0; j < n; j++) {
+            if (mask & (1 << j)) {
+                sumA += w[j];
+            }
+        }
+        long long sumB = total - sumA;
+        long long diff = llabs(sumA - sumB);
+        best = min(best, diff);
+    }
+
+    cout << best << "\n";
+    return 0;
+}
+```
+
+---
+
+## 🔍 Approach 2: Recursive Backtracking
+
+This is basically the same as brute force but expressed as recursion. It can be useful if you want to do **pruning** later.([GeeksforGeeks][3])
+
+### 🧠 Idea
+
+At index `i`, choose:
+
+* Put apple `i` in group A → recurse
+* Put apple `i` in group B → recurse
+
+Return the minimum difference down the recursion tree.
+
+### 💻 C++ Code — Recursive
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+long long solve(int idx, const vector<long long> &w, long long sumA, long long sumB) {
+    if (idx == (int)w.size()) {
+        return llabs(sumA - sumB);
+    }
+    // put w[idx] in A
+    long long chooseA = solve(idx + 1, w, sumA + w[idx], sumB);
+    // put w[idx] in B
+    long long chooseB = solve(idx + 1, w, sumA, sumB + w[idx]);
+    return min(chooseA, chooseB);
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    cin >> n;
+    vector<long long> w(n);
+    for (int i = 0; i < n; i++) {
+        cin >> w[i];
+    }
+
+    cout << solve(0, w, 0, 0) << "\n";
+    return 0;
+}
+```
+
+---
+
+## 🧠 Approach 3: Meet-in-the-Middle (Faster Practical)
+
+Because (n = 20), we can split into two halves of 10 and consider all subsets for each half.
+
+### 🚀 Why This Helps
+
+If we compute all sums for both halves (2¹⁰ ≈ 1024 each), then we pair them smartly to get closest to half of the total sum.
+
+This reduces the constant factor by avoiding full 2²⁰ enumeration in the worst case.
+
+### 🤔 How It Works
+
+1. Split array into left half, right half.
+2. Compute all subset sums of left → vector L.
+3. Compute all subset sums of right → vector R.
+4. Sort one side (say R).
+5. For each sum in L, binary search in R for the best match that gets close to `total/2`.
+
+Finally compute difference. This is similar to solving a Balanced Partition / Knapsack–type problem efficiently.
+
+### ⏱️ Complexity
+
+* (O(2^{n/2} \cdot n + 2^{n/2} \log(2^{n/2})) ≈ O(2^{10} \cdot 10)) — very fast.
+
+> Note: For (n = 20), this is nice but not strictly necessary — brute force already fits. Still useful concept for larger `n`.([arXiv][4])
+
+---
+
+## 📌 Summary
+
+| Approach               | Time          | Works? | Notes                                            |
+| ---------------------- | ------------- | ------ | ------------------------------------------------ |
+| Brute Force (bitmasks) | (2^n \cdot n) | ✅      | Simple given n ≤ 20                              |
+| Recursion              | (2^n)         | ✅      | Clear recursive structure, less bit manipulation |
+| Meet-in-the-Middle     | (2^{n/2})     | ⭐      | More advanced + faster                           |
+
+---
+
+## 🔑 Key Insight
+
+This problem is essentially a **subset partition** problem — same as finding the closest possible sum to half of the total. It’s NP-complete in general, but with (n \le 20), exponential search is fine.([Codeforces][5])
+
+---
+
+If you want **further optimizations** like using DP or general Knapsack-style techniques (works for larger sums but not needed here), I can walk you through those too! Just let me know.
+
+[1]: https://cses.fi/problemset/task/1623/ "CSES - Apple Division"
+[2]: https://cses.fi/problemset/task/1623?utm_source=chatgpt.com "Apple Division"
+[3]: https://www.geeksforgeeks.org/competitive-programming/cses-solutions-apple-division/?utm_source=chatgpt.com "CSES Solutions - Apple Division"
+[4]: https://arxiv.org/abs/1807.08248?utm_source=chatgpt.com "Subset Sum Made Simple"
+[5]: https://codeforces.com/blog/entry/69624?utm_source=chatgpt.com "Help required with CSES problem \"Apple Division\""
+
+https://cses.fi/problemset/task/1624
+
+Here’s a full **detailed explanation with approach and C++ code** for the CSES problem **“Chessboard and Queens” (Task 1624)** — placing 8 queens on an 8×8 board with some blocked cells so that no two queens attack each other. ([Daddy's Journey to Platinum][1])
+
+---
+
+## 🧠 Problem Summary
+
+You’re given an **8 × 8 chessboard**. Some squares are **free (`.`)** and some are **blocked (`*`)**.
+
+You must place exactly **8 queens**, one per row, such that:
+
+* No two queens attack each other (no same column, no same diagonal).
+* You **can only place queens on free squares** (blocked squares can’t hold a queen). ([Daddy's Journey to Platinum][1])
+
+Output the total **number of valid placements**.
+
+---
+
+## ✅ Approaches
+
+### ⚠️ Brute Force (8^8 choices — Not feasible)
+
+You might try all combinations of placing 8 queens by scanning all 64 squares and picking 8 of them. That’s **C(64,8) ≈ 4.4 × 10^8** combinations — too slow.
+
+Also, checking conflicts for each combination is costly.
+
+So this naive brute-force is **not efficient enough**.
+
+---
+
+### 🚀 Backtracking (Efficient)
+
+This is the standard way to solve **8-Queen problems** (and similar constrained searches).
+
+#### 🔍 Key Ideas
+
+* Place queens **row by row** (row 0 to 7).
+* In each row, try all free columns (`0…7`).
+* For each attempted position, check if it’s **safe**:
+
+  * Column not used by another queen.
+  * “Left” diagonal not used.
+  * “Right” diagonal not used.
+* If safe, place the queen and move to the next row.
+* If you reach row = 8, you’ve successfully placed 8 queens → **count++**.
+
+This builds the solution **incrementally and backtracks** whenever a placement would lead to a conflict.
+
+---
+
+### ✅ Safety Conditions
+
+To check if a queen at `(r, c)` is safe:
+
+* Use an array to mark **occupied columns**.
+* For diagonals, index them using:
+
+  * `leftDiagonal = r + c`
+  * `rightDiagonal = r − c + (n−1)`
+    (we offset by `+7` so indices stay non-negative)
+
+This avoids having to scan the entire board every time.
+
+---
+
+## 📌 C++ Code (Backtracking Solution)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int result = 0;
+bool columnUsed[8];        // Column flags
+bool leftDiag[15];         // r + c (0..14)
+bool rightDiag[15];        // r - c + 7 (0..14)
+bool blocked[8][8];        // Are cells blocked?
+
+void backtrack(int row) {
+    if (row == 8) {
+        // Placed all 8 queens successfully
+        result++;
+        return;
+    }
+    for (int col = 0; col < 8; col++) {
+        if (blocked[row][col]) continue;      // Must be a free square
+        if (columnUsed[col]) continue;
+        if (leftDiag[row + col]) continue;
+        if (rightDiag[row - col + 7]) continue;
+
+        // Place queen at (row, col)
+        columnUsed[col] = true;
+        leftDiag[row + col] = true;
+        rightDiag[row - col + 7] = true;
+
+        backtrack(row + 1);
+
+        // Backtrack
+        columnUsed[col] = false;
+        leftDiag[row + col] = false;
+        rightDiag[row - col + 7] = false;
+    }
+}
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    // Input
+    for (int i = 0; i < 8; i++) {
+        string s;
+        cin >> s;
+        for (int j = 0; j < 8; j++) {
+            blocked[i][j] = (s[j] == '*');
+        }
+    }
+
+    backtrack(0);
+
+    cout << result << "\n";
+    return 0;
+}
+```
+
+---
+
+## 🧾 Explanation of Code
+
+1. **Reading the board**
+   Each of 8 lines has 8 characters:
+
+   * `.` → free square
+   * `*` → blocked square ([Daddy's Journey to Platinum][1])
+
+2. **Tracking Occupied Positions**
+
+   * `columnUsed[col]` → columns already containing a queen
+   * `leftDiag` → for diagonals with constant `row + col`
+   * `rightDiag` → for diagonals with constant `row − col` (shifted)
+
+3. **Backtracking Logic**
+
+   * If we’re at `row == 8`, all queens are placed → count it.
+   * For each column `0…7`:
+
+     * Skip if square is blocked.
+     * Skip if any conflict (same column/diagonal).
+     * Otherwise place and deeper recurse.
+
+4. **Detaching the queen on return**
+   Must **unset markers** to explore other possibilities.
+
+---
+
+## 🔍 Complexity
+
+* Worst-case branches ~8 choices per row → roughly 92,000 valid placements total in standard 8-queens.
+* With blocks, some branches get pruned early → faster.
+
+Backtracking efficiently navigates search space without testing all combinations.
+
+---
+
+## 🧠 Key Learning
+
+* Use **diagonal indexing** to check diagonals in constant time.
+* Use **recursive backtracking** to build partial solutions.
+* Always **undo (backtrack)** before trying other options.
+
+This is a classic competitive programming technique. ([HackMD][2])
+
+---
+
+If you also want **bitmask optimizations** (faster with bit operations), I can provide that too!
+
+[1]: https://daddysjourney.tistory.com/58?utm_source=chatgpt.com "CSES 1. Chessboard and Queens (1624) :: Daddy's Journey to Platinum"
+[2]: https://hackmd.io/%40pumpkinnn/BJ0JfpndA?utm_source=chatgpt.com "CSES 自學筆記 - HackMD"
+
+
