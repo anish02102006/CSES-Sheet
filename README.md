@@ -2674,3 +2674,391 @@ If you also want **bitmask optimizations** (faster with bit operations), I can p
 [2]: https://hackmd.io/%40pumpkinnn/BJ0JfpndA?utm_source=chatgpt.com "CSES 自學筆記 - HackMD"
 
 
+https://cses.fi/problemset/task/3399
+
+
+Perfect 👍
+Chalo **CSES Problem 3399 – Raab Game I** ko **Hinglish** mein **step-by-step detailed approach + C++ code** ke saath samajhte hain.
+
+---
+
+## 🔹 Problem Samajho (Simple Words mein)
+
+* 2 players hain
+* Dono ke paas **1 se n** tak ke cards hain
+* Dono apne cards **ek permutation (order)** mein play karte hain
+* Har round:
+
+  * Jiska card **bada** → usko **1 point**
+  * Same card → **0 point**
+* Tumhe diye gaye hain:
+
+  * `n` = total cards
+  * `a` = Player 1 ke wins
+  * `b` = Player 2 ke wins
+
+👉 Tumhe **2 permutations print karni hain** jisse:
+
+* Player 1 exact `a` rounds jeete
+* Player 2 exact `b` rounds jeete
+
+Agar possible na ho → **NO**
+
+---
+
+## 🔹 Important Observation 🧠
+
+Total rounds = `n`
+
+Har round ya to:
+
+* Player 1 jeetega
+* Player 2 jeetega
+* Tie hoga
+
+👉 Isliye:
+
+```
+a + b ≤ n
+```
+
+Agar `a + b > n`
+➡️ **Impossible**, kyunki itne rounds hi nahi hain
+
+---
+
+## 🔹 Strategy (Greedy Construction)
+
+Hum **3 parts** mein game build karenge:
+
+---
+
+### 🟢 Part 1: Player 1 ke `a` wins
+
+Player 1 ko jeetane ke liye:
+
+* Player 1 → **largest cards**
+* Player 2 → **smallest cards**
+
+Example:
+
+```
+P1: 10 9 8
+P2: 1  2  3
+```
+
+Clearly P1 wins 💪
+
+---
+
+### 🔵 Part 2: Player 2 ke `b` wins
+
+Ab Player 2 ko jeetana hai:
+
+* Player 2 → next largest cards
+* Player 1 → next smallest cards
+
+---
+
+### ⚪ Part 3: Remaining rounds = Tie
+
+Jo cards bach gaye:
+
+* Dono same card khelenge
+* Isse tie ho jayega
+
+---
+
+## 🔹 Step-by-Step Example
+
+Suppose:
+
+```
+n = 5, a = 2, b = 1
+```
+
+### Player 1 wins (2 rounds):
+
+```
+P1: 5 4
+P2: 1 2
+```
+
+### Player 2 wins (1 round):
+
+```
+P1: 3
+P2: 3
+```
+
+### Remaining (tie):
+
+```
+P1: 2
+P2: 2
+```
+
+---
+
+## 🔹 Final Check ✅
+
+* Sab cards use ho gaye?
+* Wins match ho rahe hain?
+
+✔️ Yes → print `YES` + permutations
+❌ No → print `NO`
+
+---
+
+## 🧾 C++ Code (Clean & Correct)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int t;
+    cin >> t;
+
+    while (t--) {
+        int n, a, b;
+        cin >> n >> a >> b;
+
+        // Basic check
+        if (a + b > n) {
+            cout << "NO\n";
+            continue;
+        }
+
+        vector<int> p1(n), p2(n);
+        vector<int> used1(n + 1, 0), used2(n + 1, 0);
+
+        int l = 1, r = n;
+        int idx = 0;
+
+        // Player 1 wins
+        for (int i = 0; i < a; i++) {
+            p1[idx] = r;
+            p2[idx] = l;
+            used1[r] = used2[l] = 1;
+            r--; l++;
+            idx++;
+        }
+
+        // Player 2 wins
+        for (int i = 0; i < b; i++) {
+            p1[idx] = l;
+            p2[idx] = r;
+            used1[l] = used2[r] = 1;
+            l++; r--;
+            idx++;
+        }
+
+        // Ties
+        for (int i = 1; i <= n; i++) {
+            if (!used1[i] && !used2[i]) {
+                p1[idx] = p2[idx] = i;
+                idx++;
+            }
+        }
+
+        cout << "YES\n";
+        for (int x : p1) cout << x << " ";
+        cout << "\n";
+        for (int x : p2) cout << x << " ";
+        cout << "\n";
+    }
+
+    return 0;
+}
+```
+
+---
+
+## ⏱ Time Complexity
+
+* **O(n)** per test case
+* n ≤ 100 → easily fast 🚀
+
+---
+
+## 🔥 Final Thoughts
+
+* Ye problem **greedy + construction** ka classic example hai
+* Agar tum CSES kar rahe ho, to ye logic **future problems** mein bhi kaam aayega
+* Agar chaho to main:
+
+  * Dry run
+  * Visual explanation
+  * Edge cases
+  * Java version
+
+bhi kara sakta hoon 😄
+
+Bas bolo 👍
+
+
+https://cses.fi/problemset/task/3419
+
+
+Perfect 😄
+Chalo **CSES 3419 – Mex Grid Construction** ko **aur deep + optimized logic + crystal-clear intuition** ke saath samajhte hain — **pure Hinglish** 💯
+
+---
+
+## 🔥 Sabse Important Insight (Game Changer)
+
+Is problem ko **sets / brute MEX** se bhi solve kar sakte ho,
+**BUT** ek **smart pattern** hai jisse solution **O(n²)** me direct ban jaata hai 👀
+
+### 💡 KEY OBSERVATION:
+
+```
+Answer grid[i][j] = i XOR j
+```
+
+Yes 😎
+Bas itna hi.
+
+---
+
+## 🤯 Ye kaam kyun karta hai?
+
+### Rule yaad karo:
+
+Har cell (i, j) me number aisa hona chahiye jo:
+
+* same row me LEFT side me na ho
+* same column me UP side me na ho
+* aur sabse chhota (MEX)
+
+---
+
+## 🧠 XOR ka Magic Samjho
+
+### Property of XOR:
+
+* `i XOR j` unique hota hai row aur column ke liye
+* Agar:
+
+  * same row (i fixed): `i XOR 0, i XOR 1, i XOR 2 ...` → sab different
+  * same column (j fixed): `0 XOR j, 1 XOR j, 2 XOR j ...` → sab different
+
+👉 Matlab:
+
+* Row me duplicates ❌
+* Column me duplicates ❌
+
+---
+
+## 🔍 MEX Condition Automatically Satisfy ho jaati hai
+
+Row i ke left me values hongi:
+
+```
+i XOR 0, i XOR 1, ..., i XOR (j-1)
+```
+
+Column j ke upar values hongi:
+
+```
+0 XOR j, 1 XOR j, ..., (i-1) XOR j
+```
+
+👉 `i XOR j` **in dono jagah nahi milta**,
+aur XOR sequence **0 se continuous grow karta hai**,
+isliye ye **smallest missing number (MEX)** hota hai ✔️
+
+---
+
+## 🧪 Small Dry Run (n = 4)
+
+| i\j | 0 | 1 | 2 | 3 |
+| --- | - | - | - | - |
+| 0   | 0 | 1 | 2 | 3 |
+| 1   | 1 | 0 | 3 | 2 |
+| 2   | 2 | 3 | 0 | 1 |
+| 3   | 3 | 2 | 1 | 0 |
+
+Har cell:
+
+```
+grid[i][j] = i ^ j
+```
+
+✔ Row me repeat nahi
+✔ Column me repeat nahi
+✔ MEX condition satisfy
+
+---
+
+## 🚀 Optimized C++ Code (Super Clean)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    cin >> n;
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            cout << (i ^ j) << " ";
+        }
+        cout << "\n";
+    }
+
+    return 0;
+}
+```
+
+---
+
+## ⏱ Time & Space Complexity
+
+| Method        | Time        | Space      |
+| ------------- | ----------- | ---------- |
+| Set + MEX     | O(n² log n) | O(n²)      |
+| **XOR Trick** | ✅ **O(n²)** | ✅ **O(1)** |
+
+🔥 XOR method is **best possible**
+
+---
+
+## 🧠 Final Intuition (One-liner)
+
+> **Row index XOR Column index** hamesha
+> wahi number deta hai jo row & column dono me
+> sabse chhota missing (MEX) hota hai.
+
+---
+
+## 😎 Pro Tip (For Contests)
+
+Agar tum CSES / Codeforces me:
+
+* **Grid**
+* **MEX**
+* **Unique row & column**
+
+ye keywords dekho 👉 **XOR pattern** yaad rakho 🧠💥
+
+---
+
+Agar chaho to next:
+
+* ❓ Proof with diagrams
+* 🧩 Similar XOR grid problems
+* 🏆 Contest tips for spotting such patterns
+
+Bas bolo 🔥
+
+
+
