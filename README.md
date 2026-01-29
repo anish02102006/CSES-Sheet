@@ -3061,4 +3061,392 @@ Agar chaho to next:
 Bas bolo 🔥
 
 
+https://cses.fi/problemset/task/3217
+
+Perfect 👍 chalo **hinglish me step-by-step** samajhte hain ye **CSES Knight Moves Grid (3217)** problem — bilkul exam + competitive programming friendly way me.
+
+---
+
+## 🧩 Problem ko simple shabdon me samjho
+
+* Ek **n × n chessboard** hai
+* Knight start karta hai **top-left corner** se → `(0,0)`
+* Knight normal chess jaisa move karta hai (L shape)
+* Tumhe **har cell** ke liye batana hai:
+  👉 `(0,0)` se us cell tak **minimum kitne moves** lagenge
+
+Output:
+
+* Ek `n × n` grid
+* Jisme har cell ka answer ho
+
+---
+
+## ♞ Knight ka movement (important)
+
+Knight ke **total 8 possible moves** hote hain:
+
+```
+(+2, +1)   (+2, -1)
+(-2, +1)   (-2, -1)
+(+1, +2)   (+1, -2)
+(-1, +2)   (-1, -2)
+```
+
+Matlab:
+
+* 2 step ek direction
+* 1 step perpendicular direction
+
+---
+
+## 🤔 Ye problem kaise sochen?
+
+Socho chessboard ko **graph** jaisa:
+
+* Har cell = ek node
+* Knight ka ek move = ek edge (cost = 1)
+
+👉 Hume `(0,0)` se **sab nodes ka shortest distance** chahiye
+👉 Aur **sab edges ka cost same (1)** hai
+
+💡 **Isliye BEST technique = BFS (Breadth First Search)**
+
+---
+
+## 🚀 BFS kyun best hai?
+
+* BFS **level by level** chalta hai
+* Jo cell pehle visit hota hai → wahi minimum distance hota hai
+* Unweighted graph ke liye BFS **guaranteed shortest path** deta hai
+
+---
+
+## 🧠 Step-by-step Approach (Exam Ready)
+
+### 1️⃣ Distance array banao
+
+```cpp
+dist[n][n]
+```
+
+* Sabko `-1` se initialize karo
+* `-1` ka matlab → abhi tak visit nahi hua
+
+---
+
+### 2️⃣ BFS queue banao
+
+```cpp
+queue<pair<int,int>> q;
+```
+
+---
+
+### 3️⃣ Starting point set karo
+
+* Start cell: `(0,0)`
+* Distance = `0`
+
+```cpp
+dist[0][0] = 0;
+q.push({0,0});
+```
+
+---
+
+### 4️⃣ BFS chalao
+
+Jab tak queue empty na ho:
+
+1. Front cell nikalo
+2. Uske **8 knight moves** try karo
+3. Check karo:
+
+   * Board ke andar hai?
+   * Pehle visit nahi hua?
+4. Agar valid:
+
+   * Distance update karo
+   * Queue me push karo
+
+---
+
+### 5️⃣ BFS complete hone ke baad
+
+* `dist[i][j]` me har cell ka answer aa chuka hoga
+* Bas print kar do
+
+---
+
+## ⏱ Time & Space Complexity
+
+* **Time:** `O(n²)`
+  (Har cell ek baar visit hota hai)
+
+* **Space:** `O(n²)`
+  (Distance array + queue)
+
+CSES ke constraints ke liye perfect ✔️
+
+---
+
+## ✅ FULL C++ CODE (Clean & Explained)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    cin >> n;
+
+    // distance array
+    vector<vector<int>> dist(n, vector<int>(n, -1));
+
+    // Knight moves
+    vector<pair<int,int>> moves = {
+        {2,1}, {2,-1}, {-2,1}, {-2,-1},
+        {1,2}, {1,-2}, {-1,2}, {-1,-2}
+    };
+
+    queue<pair<int,int>> q;
+
+    // start from (0,0)
+    dist[0][0] = 0;
+    q.push({0,0});
+
+    while(!q.empty()) {
+        auto [r, c] = q.front();
+        q.pop();
+
+        for(auto mv : moves) {
+            int nr = r + mv.first;
+            int nc = c + mv.second;
+
+            // check valid cell
+            if(nr >= 0 && nr < n && nc >= 0 && nc < n) {
+                // not visited
+                if(dist[nr][nc] == -1) {
+                    dist[nr][nc] = dist[r][c] + 1;
+                    q.push({nr, nc});
+                }
+            }
+        }
+    }
+
+    // print result
+    for(int i = 0; i < n; i++) {
+        for(int j = 0; j < n; j++) {
+            cout << dist[i][j] << " ";
+        }
+        cout << "\n";
+    }
+
+    return 0;
+}
+```
+
+---
+
+## 🧠 Interview / Contest Tips
+
+* Ye problem **multi-source BFS jaisa lag sakta hai**, but actually **single source BFS** hai
+* Knight moves fixed hote hain → array me store karna best practice
+* `dist == -1` check = visited check
+
+---
+
+Agar chaho to next:
+
+* 🔥 **Dry run with example**
+* 🔥 **Java version**
+* 🔥 **Why BFS works mathematically**
+* 🔥 **Optimization tricks / edge cases**
+
+Bas bolo 😄
+
+https://cses.fi/problemset/task/3311
+
+
+Here’s a **detailed explanation** of the CSES problem you linked: **Grid Coloring I (problem 3311)** 🧩 — in *simple Hinglish* with approach and C++ code. ([cses.fi][1])
+
+---
+
+## 📘 **Problem Summary (Hinglish)**
+
+Tumhe ek **n × m grid** di hui hai. Har cell me ek character hai:
+`A`, `B`, `C` ya `D`. ([cses.fi][1])
+
+Goal:
+
+✔️ Har cell ka character **naya** character se replace karna hai
+✔️ Naya character **original se different** hona chahiye
+✔️ Aur adjacent cells (upar/neeche/left/right) me **same character nahi** hona chahiye ([cses.fi][1])
+
+Matlab:
+
+* Har cell ko change karo
+* Adjacent cells ka final grid me **koई match nahi hona chahiye**
+
+---
+
+## 🤔 **How to Think (Approach)**
+
+Ye problem ek simple **grid coloring problem** hai. Key points:
+
+1. Har cell ko change karna hai (old character se different).
+2. Adjacent cells (4 directions) me same final character nahi hona chahiye.
+
+---
+
+## 🧠 **Idea (Easy Approach)**
+
+Is problem me maximum 4 colors diye gaye hain: `A, B, C, D`. ([cses.fi][1])
+Humko grid aise color karna hai ki **har adjacent cell** me **different color** ho.
+
+Simple trick:
+
+👉 **Row × Column parity** ko use karo:
+
+* If `(i + j)` even → ek color choose karo
+* If `(i + j)` odd → koi dusra color choose karo
+
+Par **ye trick directly nahi chalega** jab old character same aa jaye.
+So har cell ke liye:
+
+✔️ Try simple set of choices based on parity
+✔️ Make sure final value ≠ original
+
+Since 4 characters available, humein safe choices mil jaate hain.
+
+---
+
+## ✅ **Step-by-Step Logic (Hinglish)**
+
+For each cell `(i, j)`:
+
+1. Consider 2 lists of alternate chars:
+
+   * Even parity list → [‘A’, ‘B’]
+   * Odd parity list → [‘C’, ‘D’]
+2. Choose first char in list that is **not equal to original**
+3. Assign it.
+
+Isse:
+
+* Adjacent parity different hote hain → different lists → automatically no collision
+* And chosen char old se different
+
+**Example list split:**
+
+```
+Even cells  → candidates {A, B}
+Odd  cells  → candidates {C, D}
+```
+
+You can swap lists too.
+
+---
+
+## 🧪 **Proof of Correctness (Intuition)**
+
+✔ Adjacent cells `(i,j)` and `(i,j+1)` have different parity → different candidate list → cannot match
+✔ Old character removed by candidate check → requirement satisfied
+✔ Because 2 choices per parity, and old char only removes at most 1, kempton safe choice remains
+
+Thus we get a valid solution.
+
+---
+
+## 🧾 **C++ Code (Simple & Fast)**
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+    vector<string> grid(n);
+
+    for (int i = 0; i < n; i++) {
+        cin >> grid[i];
+    }
+
+    vector<string> ans = grid;
+
+    // Define two sets by parity
+    vector<char> evenC = {'A','B'};
+    vector<char> oddC  = {'C','D'};
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            char orig = grid[i][j];
+            if ((i + j) % 2 == 0) {
+                // try evenC choices
+                for (char c : evenC) {
+                    if (c != orig) {
+                        ans[i][j] = c;
+                        break;
+                    }
+                }
+            } else {
+                // try oddC choices
+                for (char c : oddC) {
+                    if (c != orig) {
+                        ans[i][j] = c;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    // print
+    for (int i = 0; i < n; i++) {
+        cout << ans[i] << "\n";
+    }
+    return 0;
+}
+```
+
+---
+
+## ⚡ Complexity
+
+✔ **Time:** `O(n × m)` — linear grid iteration
+✔ **Space:** `O(n × m)` for storing answer
+
+Very efficient for large grids.
+
+---
+
+## 🧠 **Final Notes**
+
+✔ Ye problem *graph coloring* ka easy variant hai
+✔ Par since only adjacent constraints hain and fixed small colors, parity trick works well
+✔ Always check original char != new assignment
+
+---
+
+✌️ Agar chaho to mai tumhe ek **alternate solution** bhi bata sakta hoon jahan hum pattern fill karte hain row by row — just ask!
+
+[1]: https://cses.fi/problemset/task/3311?utm_source=chatgpt.com "Grid Coloring I"
+
+
+
+
+
+
+
+
+
+
 
