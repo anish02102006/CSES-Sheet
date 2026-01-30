@@ -3713,66 +3713,64 @@ Here’s a clean C++ solution:
 #include <bits/stdc++.h>
 using namespace std;
 
-int main() {
-    ios::sync_with_stdio(false);
-    cin.tie(nullptr);
+#define nl '\n'
+#define sp ' '
+#define len(x) int((x).size())
+bool is_possible(map<char, int>& ft, char cur) {
+    // Find highest occurring character
+    char mode = cur;
+    int total_left_to_fill = 0;
+    for (auto& [ch, f] : ft) {
+        if (f > ft[mode])
+            mode = ch;
+        total_left_to_fill += f;
+    }
+    return (ft[mode] <= (total_left_to_fill + 1) / 2) && (ft[cur] <= total_left_to_fill / 2);
+}
 
+void solve() {
     string s;
     cin >> s;
-    int n = s.size();
+    int n = len(s);
 
-    vector<int> cnt(26, 0);
-    for (char c : s) {
-        cnt[c - 'A']++;
-    }
+    // Create Frequency Map
+    map<char, int> ft;
+    for (auto ch : s)
+        ft[ch]++;
 
-    // Check for impossibility:
-    int maxFreq = *max_element(cnt.begin(), cnt.end());
-    if (maxFreq > (n + 1) / 2) {
-        cout << "IMPOSSIBLE\n";
-        return 0;
-    }
-
-    string result;
-    result.reserve(n);
-
+    string ans = "";
+    char last = '\0';
     for (int i = 0; i < n; i++) {
-        bool placed = false;
-        for (int c = 0; c < 26; c++) {
-            if (cnt[c] == 0) continue;
+        // Try Picking smallest character possible
+        for (int i = 0; i < 26; i++) {
+            char ch = 'A' + i;
+            // don't consider 'last' placed character
+            if (ft[ch] == 0 || ch == last) continue;
 
-            // If it's the same as last placed, skip
-            if (!result.empty() && result.back() == char('A' + c)) continue;
-
-            // Try placing letter c
-            cnt[c]--;
-            int remain = n - (int)result.size() - 1;
-
-            // Check if any letter now exceeds (remain+1)/2
-            int mx = 0;
-            for (int x : cnt) {
-                mx = max(mx, x);
-            }
-
-            if (mx <= (remain + 1) / 2) {
-                // it's feasible
-                result.push_back(char('A' + c));
-                placed = true;
+            ft[ch]--;
+            if (is_possible(ft, ch)) {
+                ans.push_back(ch);
+                last = ch;
                 break;
+            } else {
+                // unable to place 'ch' as current character; consider next smallest
+                ft[ch]++;
             }
-            // otherwise revert and try next
-            cnt[c]++;
-        }
-
-        if (!placed) {
-            // should not happen if conditions correct
-            cout << "IMPOSSIBLE\n";
-            return 0;
         }
     }
 
-    cout << result << "\n";
-    return 0;
+    if (len(ans) == n)
+        cout << ans << nl;
+    else
+        cout << "-1" << nl;
+}  //* T: O(26*n), S:O(26)
+
+int main() {
+    int t = 1;
+    // cin>>t;
+
+    while (t--)
+        solve();
 }
 ```
 
