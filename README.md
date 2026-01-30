@@ -3442,6 +3442,384 @@ Very efficient for large grids.
 
 
 
+https://cses.fi/problemset/task/2431
+
+
+The CSES problem **#2431 — *Digit Queries*** is about finding the *digit at a given position* in an *infinite string of all positive integers written in order*:
+
+> The infinite string is:
+> `1234567891011121314151617...`
+> i.e., numbers `1, 2, 3, …` concatenated as decimal strings.
+> For each query, given a position ( k ) (1-indexed), you must print the **digit at that position**. 
+
+---
+
+## 📌 Problem Summary
+
+**Input**
+
+* Integer ( q ): number of queries
+* Then ( q ) lines, each with a 1-indexed position ( k ) in the infinite string
+* (1 \le q \le 1000), (1 \le k \le 10^{18}) 
+
+**Output**
+
+* For each query, output the digit at position ( k )
+
+**Hard Constraint:**
+
+* ( k ) can be as large as (10^{18}), so constructing the string isn’t possible — we must **compute the answer mathematically**.
+
+---
+
+## 🧠 Intuition & Observations
+
+The infinite string has blocks of numbers of increasing digit length:
+
+| Digit length | Numbers     | Count of numbers | Total digits |
+| ------------ | ----------- | ---------------- | ------------ |
+| 1-digit      | 1 → 9       | 9                | 9            |
+| 2-digit      | 10 → 99     | 90               | 180          |
+| 3-digit      | 100 → 999   | 900              | 2700         |
+| 4-digit      | 1000 → 9999 | 9000             | 36000        |
+| …            | …           | …                | …            |
+
+General formulas:
+
+* Count of (d)-digit numbers = (9 \times 10^{d-1})
+* Total digits contributed by all (d)-digit numbers = (9 \times 10^{d-1} \times d)
+
+Example:
+Positions 1–9 → digits of 1–9
+Positions 10–189 → digits of 10–99
+Positions 190–2889 → digits of 100–999
+…and so on.
+
+---
+
+## 🧩 Step-by-Step Approach
+
+### ✅ **Step 1: Find which digit-length block contains position (k)**
+
+Initialize:
+
+* `d = 1`: current digit length
+* `count = 9`: count of numbers with `d` digits
+* `digits = d * count`: total digits in this block
+
+While (k > digits):
+
+* Subtract block: (k - = digits)
+* Move to next `d`:
+  `d++`
+  `count *= 10` (next block has 10× more numbers)
+  `digits = d * count`
+
+This identifies the **digit length `d`** of the number that contains the original position.
+
+---
+
+### ✅ **Step 2: Identify the specific number**
+
+Once you know the block length (d):
+
+* The first (d)-digit number is (10^{d-1})
+* The index of the desired number among all (d)-digit numbers is:
+  `index = (k - 1) / d`  (zero-based)
+* So the actual number is:
+  `num = 10^(d-1) + index`
+
+---
+
+### ✅ **Step 3: Extract the digit within that number**
+
+The digit we want inside `num` is the ((k - 1) % d)-th digit (0-indexed).
+Convert `num` to string (or compute digit by dividing/powering) and extract the character.
+
+---
+
+## 🧪 **Example**
+
+**Input:**
+
+```
+3
+7
+19
+12
+```
+
+**Infinite string beginning:**
+
+```
+1 2 3 4 5 6 7 8 9 | 1 0 1 1 1 2 …
+positions: 1 2 3 ... 9     10 11 12 13 14 15 …
+```
+
+* Position 7 → `'7'`
+* Position 19 → `'4'` (19th digit is in “… 1 0 1 1 1 2 1 3 1 4 …”: the 19th is 4)
+* Position 12 → `'1'` 
+
+Outputs:
+
+```
+7
+4
+1
+```
+
+---
+
+## 💻 C++ Implementation
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int q;
+    cin >> q;
+    while (q--) {
+        long long k;
+        cin >> k;
+
+        long long d = 1;           // current digit length
+        long long count = 9;       // count of numbers with digit length d
+        long long digits = d * count;
+
+        // Find the block where our k lies
+        while (k > digits) {
+            k -= digits;
+            d++;
+            count *= 10;
+            digits = d * count;
+        }
+
+        // Which number in this block?
+        long long index = (k - 1) / d;            // 0-based index
+        long long start = 1;
+        for (int i = 1; i < d; i++) start *= 10;  // 10^(d-1)
+        long long num = start + index;
+
+        // Which digit within num?
+        long long pos = (k - 1) % d;  // 0-based
+        string s = to_string(num);
+        cout << s[pos] << "\n";
+    }
+    return 0;
+}
+```
+
+---
+
+## 🧠 Time & Space Complexity
+
+* **Time per query:** (O(\log_{10}(k))) — because `d` grows slowly (~18 at most for (10^{18}))
+* **Space:** (O(1)) (aside from string for digit extraction)
+
+This is efficient even for the largest possible (k).
+
+---
+
+## 🎯 Key Insights
+
+✔ Use mathematical counting, **don’t build the string**
+✔ Process digit blocks in increasing size
+✔ Only extract digits from one number per query
+
+---
+
+If you want, I can also walk you through a **dry run on a specific query step by step** so you fully understand each subtraction and index calculation! 😊
+
+
+https://cses.fi/problemset/task/1743
+
+
+Here’s a **complete explanation** of the CSES problem **1743 — *String Reorder*** with all key approaches and a **C++ solution**. ([cses.fi][1])
+
+---
+
+## 📌 **Problem: String Reorder (CSES 1743)**
+
+**Task:**
+You’re given a string `s` of uppercase letters (`A–Z`). You must **reorder the characters** so that **no two adjacent characters are the same** and the result is the **lexicographically smallest possible** such arrangement. ([cses.fi][1])
+
+**Input:**
+
+* A single line string `s` of length ( n ) (1 ≤ n ≤ 2⋅10⁵) consisting of uppercase English letters (`A`–`Z`). ([cses.fi][1])
+
+**Output:**
+
+* A string where no two adjacent characters are the same, and among all valid strings, it is **lexicographically smallest**. If no valid rearrangement exists, you must print something like `IMPOSSIBLE`. (The problem statement from CSES doesn’t show an explicit “IMPOSSIBLE” format, but for this problem the approach should handle and not produce invalid rearrangements.) ([cses.fi][1])
+
+---
+
+## 🧠 **Understanding the Constraint**
+
+To be able to rearrange so that no adjacent characters are the same, a necessary condition is:
+
+> The count of the most frequent letter must be ≤ ⌈n/2⌉
+
+Otherwise it’s **impossible** to avoid repetition, because that letter is too frequent to be spaced out.
+(This is a well-known necessary condition for rearranging to no same-adjacent.)
+
+We’ll use this fact in the greedy strategy. (Similar to “reorganize string” problems.)
+
+---
+
+## ✅ **Approach — Greedy with Priority**
+
+We want **lexicographically smallest valid string** — so:
+
+### **1) Count Frequencies**
+
+Compute how many of each letter you have (26 possible letters).
+
+### **2) Check Impossibility**
+
+If any letter occurs more than ⌈n/2⌉, no valid answer exists.
+
+### **3) Build Result Greedily**
+
+At each step choose the **smallest valid character** (lexicographically) that:
+
+✔ Has remaining count > 0
+✔ Isn’t equal to the last placed character
+✔ If placed, remaining letters can still be arranged to avoid adjacency
+
+This is almost like reordering via a greedy priority approach, but with lexicographically smallest bias.
+
+---
+
+## 📘 **Key Idea Behind Greedy**
+
+At each step:
+
+* You want the smallest letter that doesn’t repeat the previous character.
+* But you must also **ensure feasibility for the rest** — i.e., we don’t run into a dead end where only the same character remains and must be placed next to itself.
+
+This is usually done by trying the smallest candidate and checking feasibility (e.g., using counts).
+
+---
+
+## 🧾 **C++ Implementation (Greedy + Feasibility Check)**
+
+Here’s a clean C++ solution:
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    string s;
+    cin >> s;
+    int n = s.size();
+
+    vector<int> cnt(26, 0);
+    for (char c : s) {
+        cnt[c - 'A']++;
+    }
+
+    // Check for impossibility:
+    int maxFreq = *max_element(cnt.begin(), cnt.end());
+    if (maxFreq > (n + 1) / 2) {
+        cout << "IMPOSSIBLE\n";
+        return 0;
+    }
+
+    string result;
+    result.reserve(n);
+
+    for (int i = 0; i < n; i++) {
+        bool placed = false;
+        for (int c = 0; c < 26; c++) {
+            if (cnt[c] == 0) continue;
+
+            // If it's the same as last placed, skip
+            if (!result.empty() && result.back() == char('A' + c)) continue;
+
+            // Try placing letter c
+            cnt[c]--;
+            int remain = n - (int)result.size() - 1;
+
+            // Check if any letter now exceeds (remain+1)/2
+            int mx = 0;
+            for (int x : cnt) {
+                mx = max(mx, x);
+            }
+
+            if (mx <= (remain + 1) / 2) {
+                // it's feasible
+                result.push_back(char('A' + c));
+                placed = true;
+                break;
+            }
+            // otherwise revert and try next
+            cnt[c]++;
+        }
+
+        if (!placed) {
+            // should not happen if conditions correct
+            cout << "IMPOSSIBLE\n";
+            return 0;
+        }
+    }
+
+    cout << result << "\n";
+    return 0;
+}
+```
+
+---
+
+## 🧪 **Example**
+
+**Input:**
+
+```
+AABB
+```
+
+**Output:**
+
+```
+ABAB
+```
+
+Explanation:
+Both `ABAB` and `BABA` are valid (no adjacent repeats), but `ABAB` is lexicographically smallest.
+
+---
+
+## 🚀 **Complexity**
+
+* Frequency count: **O(n)**
+* For each position (n total), you try at most 26 letters → **O(26 ⋅ n) = O(n)**
+* Feasibility check over 26 letters → constant
+
+Overall: **O(n)**
+
+---
+
+## 🧠 **Summary of Strategies**
+
+| Strategy                          | Use Case                      |
+| --------------------------------- | ----------------------------- |
+| Count + Feasibility               | Ensures no two adjacent same  |
+| Greedy Lexicographically Smallest | Pick smallest letter valid    |
+| Check most frequent constraint    | Early impossibility detection |
+
+---
+
+If you want, I can also show a version using a **priority queue (max heap)** approach with lexicographic ordering! (This is helpful especially when characters aren’t just A–Z.) 😊
+
+[1]: https://cses.fi/problemset/task/1743?utm_source=chatgpt.com "String Reorder"
 
 
 
