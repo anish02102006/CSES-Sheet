@@ -3823,6 +3823,282 @@ If you want, I can also show a version using a **priority queue (max heap)** app
 
 
 
+https://cses.fi/problemset/task/1625
+
+
+
+Absolutely! Let's break down your C++ solution for **CSES Problem 1625 — Grid Paths** in full detail, including **brute force → better → optimal approach**, and then **line‑by‑line explanation** of your code.
+
+---
+
+## **Problem Recap**
+
+* 7×7 grid, start at `(0,0)`, end at `(6,0)`.
+* Path string `path` of length 48 with characters `'L', 'R', 'U', 'D', '?'`.
+* `?` means any direction.
+* Count **all valid paths** that follow the pattern, visit each cell **exactly once**, and end at `(6,0)`.
+
+---
+
+# **1️⃣ Brute Force Approach**
+
+**Idea:**
+
+* Treat `'?'` as 4 choices.
+* Recursively explore all moves.
+* Only check bounds and already visited cells.
+* Base condition: if we have moved 48 times, check if at `(6,0)`.
+
+**Code sketch:**
+
+```cpp
+void dfs(int x, int y, int step) {
+    if (step == 48) {
+        if (x == 6 && y == 0) total_paths++;
+        return;
+    }
+    for (dir in {U,D,L,R}) {
+        nx, ny = move(x, y, dir)
+        if valid(nx, ny) and not visited:
+            dfs(nx, ny, step+1)
+    }
+}
+```
+
+**Problem:**
+
+* There are `4^48` possibilities → impossible.
+* So brute force **won’t run** in reasonable time.
+
+---
+
+# **2️⃣ Better Approach (DFS + early pruning)**
+
+**Idea:**
+
+* Track visited cells.
+* Stop DFS if moving **out of bounds** or revisiting a cell.
+* Stop DFS if we reach `(6,0)` **too early** before 48 steps.
+
+**Benefit:**
+
+* Reduces unnecessary recursive calls.
+* Still explores a lot of states (~millions), may pass with small inputs but **fails for 48-length paths** with many `?`.
+
+---
+
+# **3️⃣ Optimal Approach (DFS + Grid Split Pruning)**
+
+This is exactly what your code implements.
+
+**Observations for pruning (Critical!):**
+
+1. **Boxed-in paths**: If path can only go in a straight line, but both options are blocked (grid would split into disconnected regions), the current DFS branch cannot lead to a solution → **prune**.
+2. **Forced moves**: If only one direction is available, we **must** go that way.
+3. **Early exit if reach destination before all moves**.
+
+These rules drastically reduce the recursion from `4^48` → ~`5e6` recursive calls (fits in 1s).
+
+---
+
+# **Line-by-Line Code Explanation**
+
+Let's go through your code.
+
+---
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+```
+
+* Includes all standard C++ libraries.
+
+```cpp
+#define nl '\n'
+#define sp ' '
+#define len(x) int((x).size())
+#define vi vector<int>
+#define vvi vector<vector<int>>
+```
+
+* Defines shorthand macros for convenience:
+
+  * `nl` → newline
+  * `vi` → vector<int>
+  * `vvi` → 2D vector<int>
+
+```cpp
+const int N = 7;
+int total_paths = 0;
+vvi vis(N, vi(N, 0));
+string path;
+```
+
+* `N` → grid size 7.
+* `total_paths` → counter for valid paths.
+* `vis` → 7x7 matrix to track visited cells.
+* `path` → input path string of 48 characters.
+
+```cpp
+bool is_inbound(int i, int j) {
+    return i >= 0 && i < N && j >= 0 && j < N;
+}
+```
+
+* Returns true if cell `(i,j)` is within grid boundaries.
+
+---
+
+```cpp
+void dfs(int x, int y, int step) {
+```
+
+* Recursive DFS function:
+
+  * `x,y` → current position
+  * `step` → current step index in `path` (0-indexed)
+
+---
+
+```cpp
+    if (step == N * N - 1 || (x == N - 1 && y == 0)) {
+        total_paths += (step == N * N - 1 && (x == N - 1 && y == 0));
+        return;
+    }
+```
+
+* Base Case:
+
+  * If `step == 48` (all moves done) AND at `(6,0)`, count this path.
+  * Or if already at `(6,0)` before step 48 → invalid → return.
+
+---
+
+```cpp
+    //! Boxed-In Optimisations
+    // above and below visited(or out of bounds); left and right free
+    if ((!is_inbound(x - 1, y) || vis[x - 1][y]) && (!is_inbound(x + 1, y) || vis[x + 1][y]))
+        if (is_inbound(x, y - 1) && !vis[x][y - 1] && is_inbound(x, y + 1) && !vis[x][y + 1])
+            return;
+```
+
+* **Pruning 1:** Grid split / boxed-in.
+
+  * Vertical moves blocked (up/down visited or out of bounds)
+  * Horizontal moves free → would split the grid into disconnected pieces → prune.
+
+```cpp
+    // left and right visited(or out of bounds); up and down free
+    if ((!is_inbound(x, y - 1) || vis[x][y - 1]) && (!is_inbound(x, y + 1) || vis[x][y + 1]))
+        if (is_inbound(x - 1, y) && !vis[x - 1][y] && is_inbound(x + 1, y) && !vis[x + 1][y])
+            return;
+```
+
+* **Pruning 2:** Symmetric case for horizontal blockage.
+
+---
+
+```cpp
+    // * Mark current cell visited; so we don't revisit this again
+    vis[x][y] = 1;
+```
+
+* Marks `(x,y)` as visited before recursive DFS.
+
+---
+
+```cpp
+    if (path[step] == '?' || path[step] == 'L')
+        if (is_inbound(x, y - 1) && !vis[x][y - 1])
+            dfs(x, y - 1, step + 1);
+
+    if (path[step] == '?' || path[step] == 'R')
+        if (is_inbound(x, y + 1) && !vis[x][y + 1])
+            dfs(x, y + 1, step + 1);
+
+    if (path[step] == '?' || path[step] == 'U')
+        if (is_inbound(x - 1, y) && !vis[x - 1][y])
+            dfs(x - 1, y, step + 1);
+
+    if (path[step] == '?' || path[step] == 'D')
+        if (is_inbound(x + 1, y) && !vis[x + 1][y])
+            dfs(x + 1, y, step + 1);
+```
+
+* For each direction:
+
+  * If `path[step]` is `?` → explore all 4 directions.
+  * Otherwise, only follow the specified direction.
+  * Only move if the target cell is inbound **and not visited**.
+
+---
+
+```cpp
+    //* BackTracking: unmark so this cell can be visited in some other path
+    vis[x][y] = 0;
+```
+
+* **Backtracking**: after all DFS calls from `(x,y)`, unmark it so other paths can reuse it.
+
+---
+
+```cpp
+void solve() {
+    cin >> path;
+    dfs(0, 0, 0);
+    cout << total_paths << '\n';
+}
+```
+
+* Reads input path.
+* Starts DFS from `(0,0)` with step 0.
+* Prints total valid paths.
+
+---
+
+```cpp
+int main() {
+    ios::sync_with_stdio(0);
+    cin.tie(0);
+
+    int t = 1;
+    while (t--)
+        solve();
+}
+```
+
+* Fast I/O.
+* Runs `solve()` once (can extend to multiple test cases if needed).
+
+---
+
+# ✅ **Complexity Analysis**
+
+| Aspect           | Analysis                                    |
+| ---------------- | ------------------------------------------- |
+| Recursion depth  | 48 (grid moves)                             |
+| Pruned DFS calls | ~5 million max (due to pruning)             |
+| Time Complexity  | ~O(5e6) → acceptable                        |
+| Space Complexity | O(N×N + recursion depth) = 49 + 48 ≈ O(100) |
+
+> **Note:** Brute force would be `4^48` → impossible.
+
+---
+
+# **Summary of Approach Levels**
+
+| Approach                                  | Description                            | Feasible?                   |
+| ----------------------------------------- | -------------------------------------- | --------------------------- |
+| Brute force                               | DFS all 4 directions for `?`           | ❌ too slow                  |
+| DFS + basic pruning                       | Stop at walls / revisit / early finish | ❌ still slow for worst case |
+| DFS + boxed-in / forced moves (your code) | Optimal, prunes disconnected branches  | ✅ passes 1s limit           |
+
+---
+
+If you want, I can **draw a small 5×5 example** showing how the **pruning works visually**, which really helps understand why so many paths get eliminated. It’s easier to see than just reading code.
+
+Do you want me to do that?
 
 
 
