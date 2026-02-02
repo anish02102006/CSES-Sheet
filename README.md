@@ -4102,3 +4102,230 @@ Do you want me to do that?
 
 
 
+https://cses.fi/problemset/task/1621
+
+Nice example 👍 — this is a **classic “count distinct elements” problem**, and your code shows **two different approaches**. I’ll explain it **intuitively**, like you’d explain in a contest or interview.
+
+---
+
+## 🧠 Problem intuition (common for both)
+
+You are given **n numbers**.
+Your task is to find **how many unique (distinct) elements** are present.
+
+Example:
+
+```
+Input:
+7
+1 2 2 3 3 3 5
+
+Output:
+4   // {1,2,3,5}
+```
+
+---
+
+# 🔹 Approach 1: Sorting + `unique()` (function: `sorting_based_approach`)
+
+### 💡 Intuition
+
+If **equal elements are placed next to each other**, then counting unique elements becomes easy.
+
+👉 Sorting does exactly that.
+
+---
+
+### 📌 Step-by-step explanation
+
+```cpp
+int n;
+cin >> n;
+vector<int> v(n);
+```
+
+* Read size `n`
+* Create a vector to store elements
+
+---
+
+```cpp
+for (int i = 0; i < n; i++) {
+    cin >> v[i];
+}
+```
+
+* Input all elements
+
+---
+
+```cpp
+sort(v.begin(), v.end());
+```
+
+* Sort the array
+* Now equal elements are **adjacent**
+
+Example:
+
+```
+Before sort: 3 1 2 3 2
+After sort:  1 2 2 3 3
+```
+
+---
+
+```cpp
+auto pos = unique(v.begin(), v.end());
+```
+
+### 🔑 MOST IMPORTANT LINE
+
+* `unique()` **removes consecutive duplicates**
+* It does **NOT** resize the vector
+* It moves all unique elements to the **left side**
+* Returns an iterator pointing to **one position after last unique element**
+
+Example:
+
+```
+Vector after unique():
+[1 2 3  ?  ?]
+          ↑
+         pos
+```
+
+---
+
+```cpp
+cout << pos - v.begin() << "\n";
+```
+
+### Why this works?
+
+* `v.begin()` → start of vector
+* `pos` → end of unique elements
+* Difference = **number of unique elements**
+
+---
+
+### ⏱ Time & Space
+
+* **Time:** `O(n log n)` (due to sorting)
+* **Space:** `O(1)` extra (ignoring input storage)
+
+---
+
+### ✅ When to use this approach?
+
+* When **modifying array is allowed**
+* When you don’t need original order
+* Useful in **CP + interviews**
+
+---
+
+# 🔹 Approach 2: Using `set` (inside `main()`)
+
+### 💡 Intuition
+
+A **set automatically stores only unique elements**.
+
+So:
+
+* Insert everything
+* Count size
+
+No thinking about duplicates 😄
+
+---
+
+### 📌 Step-by-step explanation
+
+```cpp
+int n;
+cin >> n;
+set<int> st;
+```
+
+* Read size
+* Create a `set` (stores unique + sorted values)
+
+---
+
+```cpp
+for (int i = 1; i <= n; i++) {
+    int x;
+    cin >> x;
+    st.insert(x);
+}
+```
+
+* Each insertion:
+
+  * If element already exists → ignored
+  * Otherwise → inserted
+
+Example:
+
+```
+Insert: 2 → {2}
+Insert: 3 → {2,3}
+Insert: 2 → {2,3}  (duplicate ignored)
+```
+
+---
+
+```cpp
+cout << st.size() << "\n";
+```
+
+* Size of set = number of **distinct elements**
+
+---
+
+### ⏱ Time & Space
+
+* **Time:** `O(n log n)`
+
+  * Each insert is `O(log n)`
+* **Space:** `O(n)` (extra memory for set)
+
+---
+
+### ✅ When to use this approach?
+
+* When you want **clean & readable code**
+* When **memory is not an issue**
+* When order doesn’t matter
+
+---
+
+# 🔥 Comparison (Interview-ready)
+
+| Feature        | Sorting + unique | Set                |
+| -------------- | ---------------- | ------------------ |
+| Extra space    | ❌ No             | ✅ Yes              |
+| Simplicity     | ⚠️ Medium        | ✅ Very easy        |
+| Modifies input | ✅ Yes            | ❌ No               |
+| CP friendly    | ✅ Yes            | ⚠️ Slightly slower |
+
+---
+
+# 🎯 Final takeaway (say this in interviews)
+
+> “Both approaches take `O(n log n)` time.
+> Sorting + unique is space-efficient, while set is simpler but uses extra memory.”
+
+---
+
+If you want, next I can:
+
+* Convert this into **Shorts-friendly explanation**
+* Show **unordered_set version**
+* Explain **why unique doesn’t erase elements**
+* Help you **explain this live without getting stuck**
+
+Just tell me 👌
+
+
+
