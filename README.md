@@ -4329,3 +4329,359 @@ Just tell me 👌
 
 
 
+https://cses.fi/problemset/task/1084
+
+
+
+Cool problem choice 😄
+**CSES Problem 1084 – Apartments** ko main **Hinglish** me, **step-by-step approach + C++ code** ke saath explain kar raha hoon.
+
+---
+
+## 🔹 Problem Samajhte Hain (Simple Words me)
+
+* Tumhare paas **n applicants** hain → har applicant ko ek **desired size** ka apartment chahiye.
+* Tumhare paas **m apartments** hain → har apartment ka ek **actual size** hai.
+* Tum ek **tolerance `k`** de sakte ho.
+
+👉 Rule:
+Agar
+
+```
+|apartment_size - applicant_size| ≤ k
+```
+
+toh wo apartment us applicant ko mil sakta hai.
+
+🎯 Goal:
+**Maximum number of applicants ko apartment allot karna**
+
+---
+
+## 🔹 Example Samjho
+
+Applicants want:
+
+```
+[60, 45, 80]
+```
+
+Apartments size:
+
+```
+[30, 60, 75]
+```
+
+k = 5
+
+* Applicant 45 → apartment 30 ❌ (difference = 15)
+* Applicant 60 → apartment 60 ✅
+* Applicant 80 → apartment 75 ✅ (difference = 5)
+
+👉 Answer = **2**
+
+---
+
+## 🔹 Core Idea (Greedy + Two Pointers)
+
+### 💡 Intuition:
+
+* Dono arrays ko **sort** kar do
+* Phir **two pointers** lagao:
+
+  * ek applicant ke liye
+  * ek apartment ke liye
+
+---
+
+## 🔹 Step-by-Step Approach
+
+### 1️⃣ Input lo
+
+* `n, m, k`
+* applicant array `a[]`
+* apartment array `b[]`
+
+---
+
+### 2️⃣ Sorting
+
+```cpp
+sort(a.begin(), a.end());
+sort(b.begin(), b.end());
+```
+
+Sorting se matching easy ho jaati hai.
+
+---
+
+### 3️⃣ Two Pointer Technique
+
+* `i` → applicants
+* `j` → apartments
+* `count` → successful matches
+
+#### Case analysis:
+
+| Condition                               | Action                  |
+| --------------------------------------- | ----------------------- |
+| apartment too small (`b[j] < a[i] - k`) | `j++`                   |
+| apartment too big (`b[j] > a[i] + k`)   | `i++`                   |
+| valid match                             | `count++`, `i++`, `j++` |
+
+---
+
+## 🔹 Why This Works? (Greedy Logic)
+
+* Har applicant ke liye **sabse closest possible apartment** choose kar rahe ho
+* Agar apartment chhota hai → next apartment dekho
+* Agar apartment bada hai → next applicant dekho
+* Optimal matching guaranteed 💯
+
+---
+
+## 🔹 Time & Space Complexity
+
+* **Time:** `O(n log n + m log m)`
+* **Space:** `O(1)` (extra space nahi)
+
+---
+
+## 🔹 Complete C++ Code (Clean & Accepted)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    int n, m, k;
+    cin >> n >> m >> k;
+
+    vector<int> a(n), b(m);
+
+    for (int i = 0; i < n; i++) {
+        cin >> a[i];  // applicants
+    }
+
+    for (int i = 0; i < m; i++) {
+        cin >> b[i];  // apartments
+    }
+
+    sort(a.begin(), a.end());
+    sort(b.begin(), b.end());
+
+    int i = 0, j = 0;
+    int count = 0;
+
+    while (i < n && j < m) {
+        if (b[j] < a[i] - k) {
+            // apartment too small
+            j++;
+        }
+        else if (b[j] > a[i] + k) {
+            // apartment too big
+            i++;
+        }
+        else {
+            // valid match
+            count++;
+            i++;
+            j++;
+        }
+    }
+
+    cout << count << endl;
+    return 0;
+}
+```
+
+---
+
+## 🔹 Quick Tip for CSES / Interviews 🚀
+
+👉 Ye problem **Greedy + Two Pointers** ka **classic example** hai
+👉 Similar problems:
+
+* Assign Cookies (LeetCode)
+* Matching intervals
+* Scheduling problems
+
+---
+
+Agar chaho toh main:
+
+* dry run diagram bana du 📊
+* ya same logic Java me likh du
+* ya similar practice problems suggest kar du 💪
+
+Bas bolo 👍
+
+
+https://cses.fi/problemset/task/1090
+
+
+
+Below is the **detailed Hinglish explanation + C++ solution** for the CSES problem **“Ferris Wheel” (Problem 1090)**. ([Hugging Face][1])
+
+---
+
+## 🎡 CSES 1090 — *Ferris Wheel* (Easy)
+
+### 📌 Problem Summary (Hinglish)
+
+Tumhare paas **n log** hai aur har ek ka **weight** diya hua hai.
+Ek **Ferris wheel gondola** maximum weight **x** tak le sakta hai.
+
+Ek gondola me **1 ya 2 log** baith sakte hain,
+aur total weight jab bhi **x se zyada** ho ★nahi★ ho sakta.
+
+👉 Tumhe **minimum number of gondolas** chahiye, toh sab log ride le sakein.
+
+---
+
+## 🧠 Intuition & Approach (Simple)
+
+Sabse pehle **weights ko sort** karo — kyunki smallest ko biggest ke saath pair karna efficient hota hai.
+
+### 🧾 Greedy Idea:
+
+* Sort list → small to large.
+* Do pointers:
+
+  * **i** → start (lightest person)
+  * **j** → end (heaviest person)
+
+Loop while `i <= j`:
+
+1. Agar **lightest + heaviest ≤ x**:
+
+   * Dono ek gondola me baith sakte hain
+   * i++  (move lighter)
+   * j--  (move heavier)
+   * gondola_count++
+2. Nahi toh:
+
+   * Heaviest akela hi ride lega
+   * j--
+   * gondola_count++
+
+Is logic se:
+
+* Jo match ho sakta hai wo pair *greedily* ho jaata hai
+* Baaki ko separate le jaate hain
+
+🧠 Ye approach **optimal** hai kyunki lightest ko heaviest ke saath pair karna hamesha best hota hai jab possible ho.
+
+---
+
+## 🛠️ Step-by-Step (Example)
+
+Input:
+
+```
+n = 4
+x = 10
+weights = [1, 5, 5, 9]
+```
+
+Sorted:
+
+```
+[1, 5, 5, 9]
+```
+
+Process:
+
+| i          | j | check   | action | gondolas |
+| ---------- | - | ------- | ------ | -------- |
+| 0          | 3 | 1+9 ≤10 | pair   | 1        |
+| 1          | 2 | 5+5 ≤10 | pair   | 2        |
+| (all done) |   |         |        |          |
+
+Output = **2**
+
+---
+
+## ⏱ Complexity
+
+| Step         | Time       |
+| ------------ | ---------- |
+| Sorting      | O(n log n) |
+| Two pointers | O(n)       |
+
+💡 Overall: **O(n log n)** — fast enough for CSES constraints.
+
+---
+
+## ✅ C++ Code (Clean + Fast)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    long long x;
+    cin >> n >> x;
+
+    vector<long long> w(n);
+    for (int i = 0; i < n; i++) {
+        cin >> w[i];
+    }
+
+    sort(w.begin(), w.end());
+
+    int i = 0, j = n - 1;
+    int gondolas = 0;
+
+    while (i <= j) {
+        if (i < j && w[i] + w[j] <= x) {
+            // pair smallest + largest
+            i++;
+            j--;
+        } else {
+            // only largest goes alone
+            j--;
+        }
+        gondolas++;
+    }
+
+    cout << gondolas << "\n";
+    return 0;
+}
+```
+
+---
+
+## 🧠 Why Greedy Works
+
+* Always best to try **pair lightest with heaviest**, because:
+
+  * It minimizes leftover
+  * Maximizes pairing → fewer gondolas
+* If heavy can’t pair with lightest, then it can’t pair with anyone smaller
+
+So the approach is provably optimal.
+
+---
+
+## ✨ Quick Tip for Competitive Programming
+
+* Ye problem **two-pointer on sorted array** ka classic example hai
+* Similar problems:
+
+  * Boats to Save People (LeetCode)
+  * Pair sum constraints
+
+---
+
+Agar tum chaho, main is problem ka **dry run step-by-step with a custom input** bhi karwa sakta hoon! 🎯
+
+[1]: https://huggingface.co/datasets/minhnguyent546/cses-problem-set-metadata/viewer/default/train?p=0&utm_source=chatgpt.com "minhnguyent546/cses-problem-set-metadata · Datasets at Hugging Face"
+
+
+
+
