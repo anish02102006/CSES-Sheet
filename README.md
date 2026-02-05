@@ -4684,4 +4684,952 @@ Agar tum chaho, main is problem ka **dry run step-by-step with a custom input** 
 
 
 
+https://cses.fi/problemset/task/1091
 
+
+
+Here’s a complete **intuitive explanation + approach + dry run + C++ code** for **CSES Problem 1091 — *Concert Tickets***. ([cses.fi][1])
+
+---
+
+## ✅ Problem Summary
+
+You have `n` concert tickets with prices.
+You have `m` customers, each wanting to buy **one ticket** with price at most their “max price”.
+
+For each customer:
+
+* Find the **most expensive available ticket ≤ their max price**.
+* Print that ticket’s price.
+* Remove it — no other customer can buy it.
+* If no such ticket exists → print `-1`. ([cses.fi][1])
+
+---
+
+## 🔍 Intuition
+
+Let’s restate the problem:
+
+> For each customer’s max price, assign the **closest ticket price that is ≤ max price**, and then **remove** that ticket so it can’t be reused.
+
+That’s exactly a job for:
+
+### **Sorted multiset of ticket prices**
+
+We want to:
+
+* Quickly find the **largest ticket ≤max price**.
+* Delete exactly that ticket.
+* Repeat efficiently.
+
+We could use:
+
+✅ **multiset** (balanced BST)
+➡ allows `upper_bound()` to find smallest element > key, then step back to get ≤ key, and erase it in **log n**.
+
+---
+
+## ⚙️ Approach (Step-by-Step)
+
+1. Read `n, m`.
+2. Put the `n` ticket prices into a **multiset**.
+
+   * Duplicate prices can exist — multiset handles that.
+3. For each customer with max price `t`:
+
+   * Find iterator = `tickets.upper_bound(t)`.
+
+     * This gives first ticket **> t**.
+   * If iterator == begin:
+     → No ticket ≤ t → print `-1`.
+   * Otherwise:
+     → decrement iterator → this is the **best match**.
+     → Print that price.
+     → Erase that ticket from the multiset.
+
+This works in overall **O((n + m) log n)** — fast enough for 200,000 prices. ([Reddit][2])
+
+---
+
+## 🧠 Why `upper_bound`?
+
+* `upper_bound(x)`: first element **> x**.
+* So the ticket just before it is the **largest ≤ x**.
+* If `upper_bound` is at start → all tickets are too expensive.
+
+---
+
+## 📌 Dry Run Example
+
+```
+n = 5  ,  m = 3
+Tickets: 5 3 7 8 5
+Customers: 4 8 3
+```
+
+### Initial multiset:
+
+```
+{3,5,5,7,8}
+```
+
+---
+
+#### Customer 1: max = 4
+
+* `upper_bound(4)` → points to `5`
+* Take previous → `3`
+* Print → `3`
+* Erase one `3`
+
+Now tickets:
+
+```
+{5,5,7,8}
+```
+
+---
+
+#### Customer 2: max = 8
+
+* `upper_bound(8)` → end
+* Previous → `8`
+* Print → `8`
+* Erase `8`
+
+Now tickets:
+
+```
+{5,5,7}
+```
+
+---
+
+#### Customer 3: max = 3
+
+* `upper_bound(3)` → points to `5` (begin)
+* Nothing ≤ 3
+* Print → `-1`
+
+---
+
+### Final Output
+
+```
+3
+8
+-1
+```
+
+---
+
+## 🧾 C++ Code (Efficient)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, m;
+    cin >> n >> m;
+
+    multiset<long long> tickets;
+    for(int i = 0; i < n; i++){
+        long long price;
+        cin >> price;
+        tickets.insert(price);
+    }
+
+    while(m--){
+        long long t;
+        cin >> t;
+        // Find the first ticket > t
+        auto it = tickets.upper_bound(t);
+        if(it == tickets.begin()){
+            // No ticket <= t
+            cout << -1 << "\n";
+        } else {
+            // Move to the biggest ticket <= t
+            it--;
+            cout << *it << "\n";
+            tickets.erase(it);
+        }
+    }
+    return 0;
+}
+```
+
+---
+
+## 🧠 Additional Notes
+
+✔ `multiset.erase(it)` removes only that one copy.
+✔ Performance is good: `O(log n)` per customer.
+✔ Using an array + manual remove would TLE because deletion in array is O(n). ([Reddit][2])
+
+---
+
+If you want, I can also show a **vector + binary search + custom removal** (balanced using Fenwick or ordered set) — just ask! 😊
+
+[1]: https://cses.fi/problemset/task/1091/ "CSES - Concert Tickets"
+[2]: https://www.reddit.com/r/codeforces/comments/1crzfvh?utm_source=chatgpt.com "Why does one code work and the other doesn't"
+
+
+https://cses.fi/problemset/task/1619
+
+
+Here’s a **complete detailed explanation of CSES Problem 1619 — *Restaurant Customers*** (with intuition, approach, dry run, and C++ code).
+
+---
+
+## 🧾 Problem Link
+
+👉 [https://cses.fi/problemset/task/1619](https://cses.fi/problemset/task/1619)
+
+---
+
+## 📌 Problem Summary
+
+You are given `n` customers, each with a **start (arrival) time** and **end (leaving) time** in a restaurant.
+All arrival and leaving times are **distinct**.
+
+Your task:
+
+👉 **Find the maximum number of customers that were in the restaurant at the same time.** ([Daddy's Journey to Platinum][1])
+
+---
+
+## 🧠 Intuition
+
+This is a classic **sweep-line / event counting** problem:
+
+We want to find the point in time where the most intervals overlap.
+
+Each customer corresponds to a time interval `[start, end]`.
+So at any moment, the number of active customers = number of intervals covering that moment.
+
+---
+
+## 🔎 Key Idea: Convert to Events
+
+Instead of checking every possible time (which could be huge), we:
+
+* Represent each customer’s period with **two events**:
+
+  * `+1` at the **arrival time**
+  * `-1` at the **leaving time + 1** (or just at leaving if times are unique)
+
+Then we sort **all events by time** and sweep from smallest time to largest, keeping a **running count** of active customers.
+
+The maximum running count seen is the answer.
+
+Why it works:
+
+* When a customer enters → active count increases.
+* When a customer leaves → active count decreases.
+* By scanning in order, we see how many customers are present at every possible critical time. ([USACO Guide][2])
+
+This is often called a **line sweep / prefix sums on events**.
+
+---
+
+## 📊 Approach (Step by Step)
+
+### 1️⃣ Read input
+
+* Read `n`, the number of customers.
+* For each customer:
+
+  * Read `a` (arrival) and `b` (leaving).
+  * Store `(a, +1)` event — entering
+  * Store `(b, -1)` event — leaving
+
+### 2️⃣ Sort events by time
+
+* If times are same, put `+1` before `-1` (customers who arrive and leave at same time count arriving first).
+
+### 3️⃣ Sweep
+
+* Initialize `current = 0`, `maxCustomers = 0`
+* For each event in sorted order:
+
+  * Add event’s value (`+1` or `-1`) to `current`
+  * Update `maxCustomers = max(maxCustomers, current)`
+
+### 4️⃣ Print `maxCustomers`
+
+---
+
+## 🧾 Dry Run Example
+
+```
+n = 3
+Customers:
+5 8
+2 4
+3 9
+```
+
+### Step 1 — Make events:
+
+| Time | Change |
+| ---- | ------ |
+| 2    | +1     |
+| 4    | -1     |
+| 3    | +1     |
+| 9    | -1     |
+| 5    | +1     |
+| 8    | -1     |
+
+### Step 2 — Sort by time:
+
+```
+(2,+1), (3,+1), (4,-1), (5,+1), (8,-1), (9,-1)
+```
+
+### Step 3 — Sweep
+
+| Time | Change | Current | Max |
+| ---- | ------ | ------- | --- |
+| 2    | +1     | 1       | 1   |
+| 3    | +1     | 2       | 2   |
+| 4    | -1     | 1       | 2   |
+| 5    | +1     | 2       | 2   |
+| 8    | -1     | 1       | 2   |
+| 9    | -1     | 0       | 2   |
+
+**Answer = 2**
+
+So at maximum, **2 customers were in the restaurant simultaneously**.
+
+---
+
+## 💻 C++ Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+
+    // store (time, +1 or -1) events
+    vector<pair<long long, int>> events;
+    events.reserve(2 * n);
+
+    for (int i = 0; i < n; i++) {
+        long long a, b;
+        cin >> a >> b;
+        // +1 for arrival
+        events.push_back({a, +1});
+        // -1 for leaving
+        events.push_back({b, -1});
+    }
+
+    // sort by time
+    sort(events.begin(), events.end(), [](auto &e1, auto &e2){
+        if (e1.first == e2.first)
+            return e1.second > e2.second; 
+            // ensures +1 comes before -1 at same time
+        return e1.first < e2.first;
+    });
+
+    long long current = 0, answer = 0;
+    for (auto &ev : events) {
+        current += ev.second;
+        answer = max(answer, current);
+    }
+
+    cout << answer << "\n";
+    return 0;
+}
+```
+
+---
+
+## 🧠 Complexity
+
+* Sorting events: **O(n log n)**
+* Sweeping: **O(n)**
+
+Total: **O(n log n)** — efficient for up to 2×10⁵ customers.
+
+---
+
+## 🟢 Key Takeaways
+
+✔ Convert intervals to start/end events
+✔ Sort events
+✔ Sweep through counting active intervals
+
+This pattern is extremely useful for many “max overlapping intervals” problems. ([USACO Guide][2])
+
+---
+
+If you want, I can also explain a **priority queue / heap based** version! 😊
+
+[1]: https://daddysjourney.tistory.com/65?utm_source=chatgpt.com "CSES 2. Restaurant Customers (1619) :: Daddy's Journey to Platinum"
+[2]: https://usaco.guide/problems/cses-1619-restaurant-customers/solution/?utm_source=chatgpt.com "Solution: Restaurant Customers | Custom Comparators and Coordinate Compression · USACO Guide"
+
+
+
+https://cses.fi/problemset/task/1629
+
+
+
+Here’s a **complete explanation** for **CSES Problem 1629 — *Movie Festival***, with intuition, approach, dry run, and C++ code. ([rishabhxchoudhary.com][1])
+
+---
+
+## 📌 Problem Summary
+
+You are given `n` movies, each with a **starting time** and **ending time**.
+
+You want to **watch as many movies as possible**, but you can only watch one at a time, and you must watch a movie *entirely* (from its start to its end).
+Your task is to find the **maximum number of non-overlapping movies you can watch**.
+
+### Formal Input
+
+```
+n
+start1 end1
+start2 end2
+...
+startn endn
+```
+
+### Output
+
+One integer — the **maximum number of movies you can watch**. ([Daddy's Journey to Platinum][2])
+
+Example:
+
+```
+3
+3 5
+4 9
+5 8
+```
+
+Output:
+
+```
+2
+```
+
+Explanation: You can watch movie (3,5) and (5,8). ([Daddy's Journey to Platinum][2])
+
+---
+
+## 🧠 Core Intuition
+
+This is a classic **interval scheduling (greedy)** problem.
+
+To maximize the number of intervals (movies) you attend without overlap, a well-known greedy rule is:
+
+> **Always pick the movie with the earliest ending time** that you can attend next.
+
+Why?
+Because movies with earlier end times leave more room left over to fit subsequent movies.
+If you choose by start time, you might pick a long movie that blocks many that could otherwise fit. ([rishabhxchoudhary.com][1])
+
+---
+
+## 🧠 Detailed Approach
+
+1. **Read all movies** into a list of `(start, end)` pairs.
+2. **Sort the movies by their ending times** (smallest end first).
+3. Maintain a variable `last_end = 0` to track the time when you're free next.
+4. Initialize `count = 0`.
+5. For each movie in sorted order:
+
+   * If its **start time ≥ last_end**:
+
+     * You can watch it.
+     * Increment `count`.
+     * Set `last_end = movie’s end`.
+6. Output `count`. ([rishabhxchoudhary.com][1])
+
+That’s the **greedy choice**.
+
+---
+
+## 🧾 Why This Works
+
+Let’s see why sorting by end time is correct:
+
+Consider two movies:
+
+* A: (1, 100)
+* B: (2, 3), C: (4, 5), D: (6, 7)
+
+If you sort by start time, you pick A first → you can only watch one movie total.
+If you sort by end time, you pick B → then C → then D → total of 3 movies.
+Clearly the earliest-finishing strategy is better. ([rishabhxchoudhary.com][1])
+
+This greedy selection always leaves you free to fit as many movies as possible later. It can be proven optimal via an **exchange argument** typically covered in greedy scheduling proofs.
+
+---
+
+## 📊 Dry Run
+
+Input:
+
+```
+5
+1 4
+2 5
+6 8
+3 6
+4 7
+```
+
+### Step 1 — Sort by end time:
+
+After sort:
+
+```
+(1,4)
+(2,5)
+(3,6)
+(4,7)
+(6,8)
+```
+
+### Step 2 — Iterate
+
+| Movie | Can watch? | last_end | count |
+| ----- | ---------- | -------- | ----- |
+| (1,4) | yes        | 4        | 1     |
+| (2,5) | no         | still 4  | 1     |
+| (3,6) | no         | 4        | 1     |
+| (4,7) | yes        | 7        | 2     |
+| (6,8) | yes        | 8        | 3     |
+
+Final answer: **3**.
+
+---
+
+## 💻 C++ Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n;
+    cin >> n;
+    vector<pair<long long,long long>> movies(n);
+
+    for(int i = 0; i < n; i++){
+        cin >> movies[i].first >> movies[i].second;
+    }
+
+    // Sort by end times
+    sort(movies.begin(), movies.end(), [](auto &a, auto &b){
+        return a.second < b.second;
+    });
+
+    long long last_end = 0;
+    int count = 0;
+
+    for(auto &m : movies){
+        if(m.first >= last_end){
+            count++;
+            last_end = m.second;
+        }
+    }
+
+    cout << count << "\n";
+    return 0;
+}
+```
+
+---
+
+## 🧠 Time & Space Complexity
+
+* Sorting takes **O(n log n)**
+* Iteration takes **O(n)**
+  Total: **O(n log n)** — efficient for `n` up to `2×10^5`. ([rishabhxchoudhary.com][1])
+
+---
+
+## 🧠 Key Takeaways
+
+✔ Sort movies by their end times
+✔ Greedily pick the next movie only if it doesn’t overlap the previous one
+✔ This yields the maximum count of non-overlapping intervals
+
+---
+
+If you want, I can also give you a version with **explanatory comments in code** or a **step-by-step animation style dry run**! 😊
+
+[1]: https://www.rishabhxchoudhary.com/blog/sorting-and-searching-cses?utm_source=chatgpt.com "Solutions for CSES Sorting and Searching Problems | CSES Problem Set Guide"
+[2]: https://daddysjourney.tistory.com/66?utm_source=chatgpt.com "CSES 2. Movie Festival (1629) :: Daddy's Journey to Platinum"
+
+
+https://cses.fi/problemset/task/1640
+
+Here’s a **complete detailed explanation** of **CSES Problem 1640 — *Sum of Two Values*** with **intuition, approach, dry run, and C++ code**.
+
+---
+
+## 🧾 Problem Summary
+
+You are given an array of `n` integers and a target value `x`. Your task:
+
+👉 Find **two distinct positions** `i`, `j` such that:
+
+```
+a[i] + a[j] = x
+```
+
+If such a pair exists, **print the 1-based indices** of those two numbers. Otherwise, print:
+
+```
+IMPOSSIBLE
+```
+
+Constraints:
+
+* `1 ≤ n ≤ 2⋅10⁵`
+* `1 ≤ x, aᵢ ≤ 10⁹` ([cses.fi][1])
+
+---
+
+## 🧠 Intuition
+
+This is a classic **two-sum** problem. We want to find two numbers in the array that add up to `x`.
+Naive brute force would try all pairs — that costs **O(n²)** and is too slow for `n` up to 200,000.
+
+### Efficient approach idea:
+
+We can scan the array and for each number `a[i]`, we want to know if there exists a **previous number** `y` such that:
+
+```
+y + a[i] = x   ⇒   y = x − a[i]
+```
+
+So if we’ve already seen `y`, then we found a valid pair.
+To check this fast, we can use a **map (balanced BST or hash map)** to store previously seen values and their indices.
+
+---
+
+## ⚙️ Approach (Step-by-Step)
+
+### 📌 Using **map**
+
+1. Read `n` and `x`.
+2. For each number `a[i]` (0-based index):
+
+   * Compute `target = x − a[i]`.
+   * Check if `target` exists in map → means we've seen it before.
+
+     * If yes → print the index of that value & current index (convert to 1-based).
+     * Exit.
+   * Otherwise, insert `a[i]` into map with its index.
+3. If no pair is found → print **IMPOSSIBLE**.
+
+**Why map over unordered_map?**
+CSES test cases are known to be anti-hash — unordered_map can be too slow or cause collisions. Using `std::map` ensures reliable performance in **O(n log n)**. ([USACO Guide][2])
+
+---
+
+## 🧪 Dry Run Example
+
+```
+Input:
+4 8
+2 7 5 1
+```
+
+Target = 8
+
+* i = 0 → a[0] = 2
+  want = 8 − 2 = 6
+  map empty → insert (2: 0)
+
+* i = 1 → a[1] = 7
+  want = 8 − 7 = 1
+  1 not in map → insert (7: 1)
+
+* i = 2 → a[2] = 5
+  want = 8 − 5 = 3
+  3 not in map → insert (5: 2)
+
+* i = 3 → a[3] = 1
+  want = 8 − 1 = 7
+  7 **is in map** (from i = 1)
+  => answer: positions **(2, 4)** (converted to 1-based)
+
+Output:
+
+```
+2 4
+```
+
+---
+
+## 💻 C++ Code (Efficient & Safe)
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main(){
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    long long x;
+    cin >> n >> x;
+
+    vector<long long> a(n);
+    for(int i = 0; i < n; i++){
+        cin >> a[i];
+    }
+
+    // Use map to store {value -> index}
+    map<long long, int> mp;
+
+    for(int i = 0; i < n; i++){
+        long long val = a[i];
+        long long need = x - val;
+
+        // If needed value seen before
+        if(mp.find(need) != mp.end()){
+            // Print 1-based indices
+            cout << mp[need] + 1 << " " << i + 1 << "\n";
+            return 0;
+        }
+
+        // Otherwise, store this value & its index
+        // (only if not stored before)
+        if(mp.find(val) == mp.end()){
+            mp[val] = i;
+        }
+    }
+
+    // If no pair found
+    cout << "IMPOSSIBLE\n";
+    return 0;
+}
+```
+
+---
+
+## 🧠 Time & Space Complexity
+
+* **Time:** O(n log n) — map operations take log n
+* **Space:** O(n) — for storing values in map
+
+This is efficient for `n ≤ 200,000` as required. ([USACO Guide][2])
+
+---
+
+## 🔑 Key Takeaways
+
+✔ Use a map to check complements quickly
+✔ Avoid unordered_map in CSES due to hash-attack cases
+✔ Stops early once pair found
+
+---
+
+Would you like the **two-pointer sorted array approach** (also O(n log n)) explained too? 😊
+
+[1]: https://cses.fi/problemset/task/1640?utm_source=chatgpt.com "Sum of Two Values - CSES"
+[2]: https://usaco.guide/problems/cses-1640-sum-of-two-values/solution?utm_source=chatgpt.com "Solution: Sum of Two Values | Introduction to Sets & Maps"
+
+
+
+https://cses.fi/problemset/task/1643
+
+
+
+Here’s a **complete, detailed explanation** of **CSES Problem 1643 — *Maximum Subarray Sum*** with **intuition, approach, dry run, and C++ code** 👇 ([cses.fi][1])
+
+---
+
+## 📌 Problem Summary
+
+📍 You are given an array of `n` integers (positive, negative, or zero).
+Your task:
+👉 **Find the maximum sum of values in a contiguous (non-empty) subarray.** ([cses.fi][1])
+
+### Input
+
+```
+n
+x1 x2 ... xn
+```
+
+### Output
+
+```
+One integer – the maximum subarray sum.
+```
+
+Example:
+
+```
+8
+-1 3 -2 5 3 -5 2 2
+```
+
+Output:
+
+```
+9
+```
+
+Because the best subarray is `[3, -2, 5, 3]` with sum = 9. ([GeeksforGeeks][2])
+
+---
+
+## 💡 Intuition
+
+We want the **best contiguous chunk** of the array that gives the largest sum.
+
+If we tried all possible subarrays, that would take **O(n²)** — too slow for large `n`.
+
+💡 Instead we use a classic dynamic approach called **Kadane’s algorithm**:
+
+* Maintain the **best sum ending at the current position**.
+* If adding the current number decreases the sum, **start a new subarray** at the current position.
+
+---
+
+## 🧠 Key Idea (Kadane’s Algorithm)
+
+Let:
+
+* `current_sum` = best sum of a subarray that ends at the current index.
+* `max_sum` = best subarray sum found so far.
+
+For each element `a[i]`:
+
+```
+current_sum = max(a[i], current_sum + a[i])
+max_sum = max(max_sum, current_sum)
+```
+
+Why?
+
+* If including `a[i]` in the previous subarray makes the sum smaller than `a[i]` itself, then it’s better to start fresh from `a[i]`.
+* Otherwise, keep extending the previous best subarray.
+
+This runs in **O(n)** time with constant extra space. ([Wikipedia][3])
+
+---
+
+## 🔍 Dry Run Example
+
+```
+Array: -1  3  -2   5   3  -5   2   2
+```
+
+Initialize:
+
+```
+current_sum = -1
+max_sum = -1
+```
+
+Step-by-step:
+
+| i | a[i] | current_sum      | max_sum |
+| - | ---- | ---------------- | ------- |
+| 0 | -1   | max(-1, -1) = -1 | -1      |
+| 1 | 3    | max(3, -1+3) = 3 | 3       |
+| 2 | -2   | max(-2, 3-2) = 1 | 3       |
+| 3 | 5    | max(5, 1+5) = 6  | 6       |
+| 4 | 3    | max(3, 6+3) = 9  | 9       |
+| 5 | -5   | max(-5, 9-5) = 4 | 9       |
+| 6 | 2    | max(2, 4+2) = 6  | 9       |
+| 7 | 2    | max(2, 6+2) = 8  | 9       |
+
+Final answer = **9** (from subarray `3, -2, 5, 3`). ([GeeksforGeeks][2])
+
+---
+
+## 🧾 C++ Code
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
+    int n;
+    cin >> n;
+    long long current_sum = 0, max_sum = LLONG_MIN;
+
+    for (int i = 0; i < n; i++) {
+        long long x;
+        cin >> x;
+
+        // Kadane step
+        if (i == 0) {
+            current_sum = x;
+            max_sum = x;
+        } else {
+            current_sum = max(x, current_sum + x);
+            max_sum = max(max_sum, current_sum);
+        }
+    }
+
+    cout << max_sum << "\n";
+    return 0;
+}
+```
+
+---
+
+## 🧠 Why This Works
+
+Consider any point in the array:
+
+* You want to know the best subarray ending there.
+* If the best sum *so far* is negative, continuing it only lowers the total.
+* By choosing `max(a[i], current_sum + a[i])`, you decide whether to **extend** or **restart** the best subarray.
+
+This greedy step ensures we always keep the best possible contiguous sum up to that index. ([Wikipedia][3])
+
+---
+
+## ✅ Complexity
+
+| Aspect | Cost     |
+| ------ | -------- |
+| Time   | **O(n)** |
+| Space  | **O(1)** |
+
+Efficient even for large `n` (up to 2×10⁵). ([cses.fi][4])
+
+---
+
+## 🧠 Handle All Negatives
+
+Even if all numbers are negative, Kadane handles it — the best is the **largest element** (least negative), not zero, because the subarray must be non-empty. ([Wikipedia][3])
+
+---
+
+If you want, I can also explain how to **retrieve the actual subarray indices**, not just the sum 😊.
+
+[1]: https://cses.fi/problemset/task/1643?utm_source=chatgpt.com "Maximum Subarray Sum - CSES"
+[2]: https://www.geeksforgeeks.org/competitive-programming/cses-solutions-maximum-subarray-sum/?utm_source=chatgpt.com "CSES Solutions - Maximum Subarray Sum - GeeksforGeeks"
+[3]: https://en.wikipedia.org/wiki/Maximum_subarray_problem?utm_source=chatgpt.com "Maximum subarray problem"
+[4]: https://cses.fi/problemset/?utm_source=chatgpt.com "CSES Problem Set - Tasks"
